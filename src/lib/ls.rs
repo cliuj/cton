@@ -1,22 +1,18 @@
 use std::fs;
-use std::io;
-use std::io::Write;
 
-pub fn ls(cmd: Vec<&str>) {
+use crate::lib::lexeme::Lexeme;
+
+pub fn ls(lexemes: Vec<Lexeme>) {
     println!("Executing from module 'ls'. . .");
-
-    println!("cmd line: {:?}", cmd);
-
-    //if cmd.copy().len() {
-    match cmd.len() {
-        // run ls with no args 
-        1 => ls_noargs(),
-        _ => println!("cmd length is greater than 1!")
-    };
+    
+    //for lexeme in lexemes {
+    //    println!("{}", lexeme.unwrap());
     //}
-    // ls_opts
 
-    // ls_all
+
+
+
+
 }
 
 fn ls_noargs() {
@@ -33,3 +29,4 @@ fn ls_noargs() {
     }
     println!();
 }
+

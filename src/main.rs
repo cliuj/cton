@@ -18,12 +18,22 @@ fn main() {
                 .expect("Failed to read line");
             input   
         };
-        
+
         let cmd = input.trim().split_whitespace().collect::<Vec<&str>>();
+
+        // parse cmd and decide if certain string is either option or dir/file
+
+        let lexemes = lib::lexer::lexer(&cmd[1..]);
+
+        //for lex in lexemes {
+        //    println!("Input: {}, Kind: {}", lex.input, lex.kind);
+        //}
+
+        
 
         match cmd[0].as_ref() {
             "ls" => {
-                lib::ls::ls(cmd);
+                lib::ls::ls(lexemes);
             },
 
             "clear" => {
