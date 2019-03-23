@@ -8,10 +8,7 @@ pub fn lexer(cmd: &[&str]) -> Vec<Lexeme> {
     for word in cmd {
         
         if word.starts_with("--") && word.chars().count() > 2{
-            println!("Inside --: {}", word.chars().count());
-            
             lexemes.push( Lexeme::OPTION(word.to_string()));
-
 
         } else if word.starts_with("-") && word.chars().count() > 1 && !word.starts_with("--"){
 
@@ -20,7 +17,7 @@ pub fn lexer(cmd: &[&str]) -> Vec<Lexeme> {
         } else {
 
             lexemes.push( Lexeme::FILE(word.to_string()));
-
+            println!("{} pushed to lexemes", word.to_string());
         }
     }
 
