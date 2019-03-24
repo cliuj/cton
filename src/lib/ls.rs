@@ -61,6 +61,20 @@ struct Instruction {
     list_content: ListContent,
 }
 
+struct Output {
+    inode: String,
+    block_size: String,
+    special_file: String,
+    permissions: String,
+    dir_links: String,
+    owner: String,
+    group: String,
+    bytes: String,
+    last_mod_date: String,
+    file_name: String,
+    list: String,
+}
+
 pub fn ls(lexemes: Vec<Lexeme>) {
     println!("\nExecuting from module 'ls'. . .");
 
@@ -130,9 +144,10 @@ pub fn ls(lexemes: Vec<Lexeme>) {
     process_options(&mut instruction, options);
 
     // process instruction
-    process_instruction(&mut instruction, files);
+    let output = process_instruction(&mut instruction, files);
 
     // display based on options
+    display(output.unwrap());
 }
 
 
@@ -271,82 +286,162 @@ fn process_options(instruction: &mut Instruction, options: HashSet<String>) {
     }
 }
 
-fn process_instruction(instruction: &mut Instruction, files: Vec<&str>) -> io::Result<Vec<String>>{
+fn process_instruction(instruction: &mut Instruction, files: Vec<&str>) -> io::Result<Vec<Output>>{
     println!("Printing from process_instruction: ");
-    let mut output: Vec<String> = Vec::new();
+    let mut entries: Vec<Output> = Vec::new();
 
-    if !instruction.valid {
-        output.push("Invalid input".to_string());
-        return Ok(output)
-    }
-    
-    println!("{:?}", instruction);
+    //if !instruction.valid {
+    //    entries.push("invalid input");
+    //    return Ok(entries)
+    //}
+
+    //println!("{:?}", instruction);
     for file in files {
         for entry in fs::read_dir(file)? {
             if let Ok(entry) = entry {
+                
+                let filemd = entry.metadata().unwrap();
+
+                // every entry will have this
+                let mut output = Output {
+                    inode: "".to_string(),
+                    block_size: "".to_string(),
+                    special_file: "".to_string(),
+                    permissions: "".to_string(),
+                    dir_links: "".to_string(),
+                    owner: "".to_string(),
+                    group: "".to_string(),
+                    bytes: "".to_string(),
+                    last_mod_date: "".to_string(),
+                    file_name: "".to_string(),
+                    list: "".to_string(),
+                };
+
+                let file_name = entry.file_name().to_str().unwrap().to_string();
+                
+                match instruction.content {
+                    ContentOption::None => {
+                        if file_name.chars().next().unwrap() != '.' {
+                            output.file_name = file_name;
+                        } else {
+                            continue;
+                        }
+                    },
+                
+                    ContentOption::All => {
+                        output.file_name = file_name;
+                    },
+                
+                    ContentOption::AlmostAll => {
+                        output.file_name = file_name;
+                    },
+                }
+                
                 match instruction.format {
 
-                    FormatOption::NoList => {
-                        match_content(instruction, &mut output, &entry);
-                    },
+                    FormatOption::NoList => {},
 
                     FormatOption::List => {
-                        println!("List reached");
+                        output.list = "\n".to_string();
                     },
 
                     FormatOption::LongList => {
-                        println!("LongList");
+                        output.list = "\n".to_string();
 
+                        println!("{:?}", filemd.mode() & 0o777);
+
+                        if instruction.list_content.author {
+                            //println!("{}", filemd.uid());
+                        }
+
+                        if instruction.list_content.owner {
+
+                        }
+
+                        if instruction.list_content.group {
+
+                        }
+
+                        if instruction.list_content.human_readable {
+
+                        }
+
+                        if instruction.list_content.size {
+                            
+                        }
                     },
                 }
+
+
+                match instruction.name {
+
+                    NameOption::Normal => {},
+
+                    NameOption::DoubleQuotes => {
+                        output.file_name = format!("\"{}\"", output.file_name);
+                    },
+
+                    NameOption::AppendSlash => {
+                        if filemd.is_dir() {
+                            output.file_name = format!("{}/", output.file_name);
+                        }
+                    },
+
+                }
+
+                match instruction.sort {
+                    SortOption::Alphabetical => {
+
+                    }
+
+                    SortOption::Size => {
+                    
+                    },
+
+                    SortOption::Time => {
+                    
+                    },
+
+                    SortOption::Order => {
+                    
+                    },
+
+                    SortOption::Extension => {
+                    
+                    },
+                }
+                
+                //println!("{:?}", meta.unwrap());
+
+
+                entries.push(output);
             }
         }
     }
-    
-    println!("Contents of output: ");
-    for line in &output {
-        println!("{}", line);
-    }
-
-    Ok(output)
+    Ok(entries)
 }
 
 
-fn match_content(instruction: &Instruction, output: &mut Vec<String>, entry: &DirEntry)  {
+//(<inode> <block_size> <special_file> <permissions> <dir_links> <owner> <group> <bytes> <data_of_last_modification> <file_name>
 
-    let file_name = entry.file_name();
-    match instruction.content {
-        ContentOption::None => {
-            if !file_name.to_str().map(|s| s.starts_with(".")).unwrap() {
-                output.push(format!("{}", file_name.to_str().unwrap()));
-            }
-        },
-    
-        ContentOption::All => {
-            output.push(format!("{}", file_name.to_str().unwrap()));
-        },
-    
-        ContentOption::AlmostAll => {
-            if file_name.to_str().unwrap() != ".." || file_name.to_str().unwrap() != "." {
-                output.push(format!("{}", file_name.to_str().unwrap()));
-            }
-        },
-    }
-}
-
-
-
-
-
-
-
-
-
-fn display(output: Vec<String>) {
+fn display(output: Vec<Output>) {
     println!("Printing from display: ");
     for line in output {
-        print!("{}", line);
+        print!("{inode}{block_size}{special_file}{permissions}{dir_links}{owner}{group}{bytes}{last_mod_date}{file_name}{list}"
+               ,inode=line.inode
+               ,block_size=line.block_size
+               ,special_file=line.special_file
+               ,permissions=line.permissions
+               ,dir_links=line.dir_links
+               ,owner=line.owner
+               ,group=line.group
+               ,bytes=line.bytes
+               ,last_mod_date=line.last_mod_date
+               ,file_name=line.file_name
+               ,list=line.list
+               );
         io::stdout().flush()
             .expect("Failed to flush stdout buffer");
     }
+    println!();
 }
