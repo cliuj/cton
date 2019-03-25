@@ -1,8 +1,9 @@
 [package]
 name = "cton"
 version = "0.1.0"
-authors = [" Liu"]
+authors = ["Liu"]
 edition = "2018"
 
 [dependencies]
 libc = "0.2.50"
+quick-error = "1.2.2"

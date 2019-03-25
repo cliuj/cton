@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate quick_error;
+
 use std::io;
 use std::io::Write;
 use std::vec::Vec;
@@ -36,6 +39,10 @@ fn main() {
                 lib::ls::ls(lexemes);
             },
 
+            "cat" => {
+                lib::cat::cat(lexemes);
+            }
+
             "clear" => {
                 print!("\x1b[2J\x1b[1;1H");
             },
@@ -43,7 +50,7 @@ fn main() {
             "exit" => {
                 print!("Exiting shell!");
                 break;
-            },
+            }
             _ => {}
         };
     };
