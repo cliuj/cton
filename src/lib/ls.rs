@@ -1,10 +1,16 @@
-use std::fs;
+extern crate libc;
+use libc::{ 
+    S_IRUSR, S_IWUSR, S_IXUSR,
+    S_IRGRP, S_IWGRP, S_IXGRP,
+    S_IROTH, S_IWOTH, S_IXOTH,
+};
+
+
 use std::io;
+use std::fs;
 use std::io::Write;
-use std::fs::DirEntry;
-use std::os::unix::fs::MetadataExt;
-//use std::os::unix::fs::DirEntryExt;
-use std::os::unix::fs::PermissionsExt;
+use std::fs::{ DirEntry, FileType };
+use std::os::unix::fs::{ FileTypeExt, MetadataExt, PermissionsExt };
 
 use std::collections::HashSet;
 
@@ -31,6 +37,7 @@ struct ListContent {
     group: bool,
     human_readable: bool,
     size: bool,
+    blksize: bool,
 }
 
 #[derive(Debug)]
@@ -61,6 +68,20 @@ struct Instruction {
     list_content: ListContent,
 }
 
+struct Output {
+    inode: String,
+    block_size: String,
+    file_type: String,
+    permissions: String,
+    dir_links: String,
+    owner: String,
+    group: String,
+    bytes: String,
+    last_mod_date: String,
+    file_name: String,
+    list: String,
+}
+
 pub fn ls(lexemes: Vec<Lexeme>) {
     println!("\nExecuting from module 'ls'. . .");
 
@@ -82,6 +103,7 @@ pub fn ls(lexemes: Vec<Lexeme>) {
                 group: true,
                 human_readable: false,
                 size: true,
+                blksize: false,
             },
     };
 
@@ -130,9 +152,10 @@ pub fn ls(lexemes: Vec<Lexeme>) {
     process_options(&mut instruction, options);
 
     // process instruction
-    process_instruction(&mut instruction, files);
+    let output = process_instruction(&mut instruction, files);
 
     // display based on options
+    display(output.unwrap());
 }
 
 
@@ -234,7 +257,7 @@ fn process_options(instruction: &mut Instruction, options: HashSet<String>) {
             
             "-s" | "--size" => {
                 println!("{} confirmed", option);
-                instruction.list_content.size = true; 
+                instruction.list_content.blksize = true; 
             },
             
             "-S" => {
@@ -271,82 +294,296 @@ fn process_options(instruction: &mut Instruction, options: HashSet<String>) {
     }
 }
 
-fn process_instruction(instruction: &mut Instruction, files: Vec<&str>) -> io::Result<Vec<String>>{
+fn process_instruction(instruction: &mut Instruction, files: Vec<&str>) -> io::Result<Vec<Output>>{
     println!("Printing from process_instruction: ");
-    let mut output: Vec<String> = Vec::new();
+    let mut entries: Vec<Output> = Vec::new();
 
-    if !instruction.valid {
-        output.push("Invalid input".to_string());
-        return Ok(output)
-    }
-    
-    println!("{:?}", instruction);
+    //if !instruction.valid {
+    //    entries.push("invalid input");
+    //    return Ok(entries)
+    //}
+
+    //println!("{:?}", instruction);
     for file in files {
         for entry in fs::read_dir(file)? {
             if let Ok(entry) = entry {
+                
+                let filemd = entry.metadata().unwrap();
+
+                // every entry will have this
+                let mut output = Output {
+                    inode: "".to_string(),
+                    block_size: "".to_string(),
+                    file_type: "".to_string(),
+                    permissions: "".to_string(),
+                    dir_links: "".to_string(),
+                    owner: "".to_string(),
+                    group: "".to_string(),
+                    bytes: "".to_string(),
+                    last_mod_date: "".to_string(),
+                    file_name: "".to_string(),
+                    list: "".to_string(),
+                };
+
+                let file_name = entry.file_name().to_str().unwrap().to_string();
+                
+                match instruction.content {
+                    ContentOption::None => {
+                        if file_name.chars().next().unwrap() != '.' {
+                            output.file_name = file_name;
+                        } else {
+                            continue;
+                        }
+                    },
+                
+                    ContentOption::All => {
+                        output.file_name = file_name;
+                    },
+                
+                    ContentOption::AlmostAll => {
+                        output.file_name = file_name;
+                    },
+                }
+                
                 match instruction.format {
 
                     FormatOption::NoList => {
-                        match_content(instruction, &mut output, &entry);
+                        output.list = "   ".to_string();
                     },
 
                     FormatOption::List => {
-                        println!("List reached");
+                        output.list = "\n".to_string();
                     },
 
                     FormatOption::LongList => {
-                        println!("LongList");
+                        output.list = "\n".to_string();
+                        output.permissions = format!("{} ", format_permissions(filemd.mode()));
+                        output.file_type = get_filetype(&filemd.file_type());
+                        let mut size = filemd.size().to_string();
+                        let mut block_size = filemd.blksize().to_string();
 
+
+                        if instruction.list_content.author {
+                            
+                        }
+
+                        if instruction.list_content.owner {
+                            output.owner = format!("{} ", filemd.uid().to_string());
+                        }
+
+                        if instruction.list_content.group {
+                            output.group = format!("{} ", filemd.gid().to_string());
+
+                        }
+
+                        if instruction.list_content.human_readable {
+                            //output.bytes = format!("{}K", output.bytes / 1000.0);
+                            if filemd.size() > 1024 {
+                                size = format!("{}K ", (filemd.size() / 1024).to_string());
+                            }
+
+                            if filemd.blksize() > 1024 {
+                                block_size = format!("{}K ", (filemd.blksize() / 1024).to_string());
+                            }
+                        }
+
+                        if instruction.list_content.blksize {
+                            
+                            output.block_size = block_size;
+                        }
+                        
+                        //println!
+                        let s = get_last_mod_date(convert_sec_to_date(filemd.mtime()));
+                        output.last_mod_date = format!("{} ", s);
+                        
+                        output.dir_links = format!("{} ", filemd.nlink().to_string());
+                        output.bytes = format!("{} ", size.to_string());
                     },
                 }
+
+
+                match instruction.name {
+
+                    NameOption::Normal => {},
+
+                    NameOption::DoubleQuotes => {
+                        output.file_name = format!("\"{}\"", output.file_name);
+                    },
+
+                    NameOption::AppendSlash => {
+                        if filemd.is_dir() {
+                            output.file_name = format!("{}/", output.file_name);
+                        }
+                    },
+
+                }
+
+                match instruction.sort {
+                    SortOption::Alphabetical => {
+
+                    }
+
+                    SortOption::Size => {
+                    
+                    },
+
+                    SortOption::Time => {
+                    
+                    },
+
+                    SortOption::Order => {
+                    
+                    },
+
+                    SortOption::Extension => {
+                    
+                    },
+                }
+
+                if instruction.inode {
+                    output.inode = format!("{} ", filemd.ino().to_string());
+                }
+                
+                //println!("{:?}", meta.unwrap());
+
+
+                entries.push(output);
             }
         }
     }
-    
-    println!("Contents of output: ");
-    for line in &output {
-        println!("{}", line);
-    }
-
-    Ok(output)
+    Ok(entries)
 }
 
+fn get_filetype(file_type: &FileType) -> String {
 
-fn match_content(instruction: &Instruction, output: &mut Vec<String>, entry: &DirEntry)  {
+    let mut ft = String::with_capacity(1);
 
-    let file_name = entry.file_name();
-    match instruction.content {
-        ContentOption::None => {
-            if !file_name.to_str().map(|s| s.starts_with(".")).unwrap() {
-                output.push(format!("{}", file_name.to_str().unwrap()));
-            }
-        },
+    if file_type.is_dir() {
+        ft.push('d');
     
-        ContentOption::All => {
-            output.push(format!("{}", file_name.to_str().unwrap()));
-        },
+    } else if file_type.is_symlink() {
+        ft.push('l');
     
-        ContentOption::AlmostAll => {
-            if file_name.to_str().unwrap() != ".." || file_name.to_str().unwrap() != "." {
-                output.push(format!("{}", file_name.to_str().unwrap()));
-            }
-        },
+    } else if file_type.is_block_device() {
+        ft.push('b');
+    
+    } else if file_type.is_char_device() {
+        ft.push('c');
+    
+    } else if file_type.is_fifo() {
+        // called "named pipe" hence the 'p'
+        ft.push('p');
+    
+    } else if file_type.is_socket() {
+        ft.push('s');
+
+    } else {
+        ft.push('-');
+    }
+
+    ft
+}
+
+fn format_permissions(mode: u32) -> String {
+    
+    let user = get_permissions(mode, S_IRUSR, S_IWUSR, S_IXUSR);
+    let group = get_permissions(mode, S_IRGRP, S_IWGRP, S_IXGRP);
+    let other = get_permissions(mode, S_IROTH, S_IWOTH, S_IXOTH);
+    [user, group, other].join("")
+}
+
+fn get_permissions(mode: u32, read: u32, write: u32, execute: u32) -> String {
+    match (mode & read, mode & write, mode & execute) {
+        (0, 0, 0) => "---",
+        (_, 0, 0) => "r--",
+        (0, _, 0) => "-w-",
+        (0, 0, _) => "--x",
+        (_, 0, _) => "r-x",
+        (_, _, 0) => "rw-",
+        (0, _, _) => "-wx",
+        (_, _, _) => "rwx",
+    }.to_string()
+}
+
+struct Date {
+    year: i64,
+    month: String,
+    day: i64,
+    hour: i64,
+    min: i64,
+}
+
+fn convert_sec_to_date(mtime: i64) -> Date {
+    let year = mtime / 31556926;
+    
+    let mtime = mtime % 31556926;
+
+    let month = mtime / 2629743;
+
+    let mtime = mtime % 2629743;
+
+    let day = mtime / 86400;
+
+    let mtime = mtime % 86400;
+
+    let hour = mtime / 3600;
+
+    let mtime = mtime % 3600;
+
+    let mins = mtime / 60;
+    
+    Date {
+        year: year,
+        month: get_month(month),
+        day: day,
+        hour: hour,
+        min: mins,
     }
 }
 
+fn get_last_mod_date(date: Date) -> String {
+    format!("{month} {day} {hour}:{min}", month=date.month, day=date.day.to_string(), hour=date.hour.to_string(), min=date.min.to_string())
+}
 
+fn get_month(month: i64) -> String {
+    let mn = month % 12;
+    match mn {
+        1 => "Jan",
+        2 => "Feb",
+        3 => "Mar",
+        4 => "Apr",
+        5 => "May",
+        6 => "Jun",
+        7 => "Jul",
+        8 => "Aug",
+        9 => "Sep",
+        10 => "Oct",
+        11 => "Nov",
+        12 => "Dec",
+        _ => "",
+    }.to_string()
+}
 
+//(<inode> <block_size> <file_type> <permissions> <dir_links> <owner> <group> <bytes> <data_of_last_modification> <file_name>
 
-
-
-
-
-
-fn display(output: Vec<String>) {
-    println!("Printing from display: ");
+fn display(output: Vec<Output>) {
+    println!("Printing from display: \n");
     for line in output {
-        print!("{}", line);
+        print!("{inode}{block_size}{file_type}{permissions}{dir_links}{owner}{group}{bytes}{last_mod_date}{file_name}{list}"
+               ,inode=line.inode
+               ,block_size=line.block_size
+               ,file_type=line.file_type
+               ,permissions=line.permissions
+               ,dir_links=line.dir_links
+               ,owner=line.owner
+               ,group=line.group
+               ,bytes=line.bytes
+               ,last_mod_date=line.last_mod_date
+               ,file_name=line.file_name
+               ,list=line.list
+               );
         io::stdout().flush()
             .expect("Failed to flush stdout buffer");
     }
+    println!();
 }
