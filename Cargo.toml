@@ -1,7 +1,7 @@
 [package]
 name = "cton"
 version = "0.1.0"
-authors = ["Liu"]
+authors = ["Jiacheng Liu, Harshit Joshi"]
 edition = "2018"
 
 [dependencies]
