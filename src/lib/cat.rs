@@ -4,7 +4,7 @@ use std::collections::HashSet;
 
 use quick_error::ResultExt;
 
-use crate::lib::lexeme::Lexeme;
+use crate::lib::token::Token;
 
 quick_error! {
     #[derive(Debug)]
@@ -50,23 +50,25 @@ struct InputHandle {
 
 type CatResult<T> = Result<T, CatError>;
 
-pub fn cat(lexemes: Vec<Lexeme>) {
+pub fn cat(tokens: Vec<Token>) {
 
    println!("\n Executing from module 'cat'....");
 
    let mut _options: HashSet<String> = HashSet::new();
    let mut files: Vec<String> = Vec::new();
 
-   for lexeme in &lexemes {
-       match &lexeme {
-           Lexeme::OPTION(_option) => {
+   for token in &tokens {
+       match &token {
+           Token::Option(_) => {
 
            },
 
-           Lexeme::FILE(_file) => {
-            files.push(lexeme.unwrap().to_string());
-           }
-       }
+           Token::Misc(_) => {
+            files.push(token.unwrap().to_string());
+           },
+
+           _ => ()
+        }
    }
 
    print(files).is_ok();

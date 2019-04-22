@@ -26,21 +26,29 @@ fn main() {
 
         // parse cmd and decide if certain string is either option or dir/file
 
-        let lexemes = lib::lexer::lexer(&cmd[1..]);
+        //let lexemes = lib::lexer::lexer(&cmd[1..]);
 
         //for lex in lexemes {
         //    println!("Input: {}, Kind: {}", lex.input, lex.kind);
         //}
 
+        let mut tokens = lib::tokenizer::tokenize(input.trim());
+
+        for token in &tokens {
+            println!("{:?}", token);
+        }
+
         
 
         match cmd[0].as_ref() {
             "ls" => {
-                lib::ls::ls(lexemes);
+                tokens.remove(0);
+                lib::ls::ls(tokens);
             },
 
             "cat" => {
-                lib::cat::cat(lexemes);
+                tokens.remove(0);
+                lib::cat::cat(tokens);
             }
 
             "clear" => {
@@ -48,7 +56,7 @@ fn main() {
             },
 
             "exit" => {
-                print!("Exiting shell!");
+                println!("Exiting shell!");
                 break;
             }
             _ => {}
