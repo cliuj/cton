@@ -12,7 +12,14 @@ pub fn tokenize(input: &str) -> Vec<Token> {
 
         if is_terminator(bytes[iter]) {
             if !lexeme.is_empty() {
-                tokens.push(Token::Misc(lexeme.clone()));
+                tokens.push(
+                    match lexeme.as_str() {
+                        "|" => Token::PipeOperator(lexeme.clone()),
+                        ">" => Token::OutputOperator(lexeme.clone()),
+                        "<" => Token::InputOperator(lexeme.clone()),
+                        ";" => Token::Terminator(lexeme.clone()),
+                        _ => Token::Misc(lexeme.clone()),
+                    });
                 lexeme.clear();
             }
         }
@@ -105,6 +112,11 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                             lexeme.push(bytes[iter] as char);
                             iter += 1;
                         }
+                        
+                        if iter == eol - 1 {
+                            lexeme.push(bytes[iter] as char);
+                        }
+
                         tokens.push(Token::Option(lexeme.clone()));
                         lexeme.clear();
                     } else {
@@ -125,7 +137,14 @@ pub fn tokenize(input: &str) -> Vec<Token> {
 
         } else {
             lexeme.push(bytes[iter] as char);
-            tokens.push(Token::Misc(lexeme.clone()));
+            tokens.push(
+                match lexeme.as_str() {
+                    "|" => Token::PipeOperator(lexeme.clone()),
+                    ">" => Token::OutputOperator(lexeme.clone()),
+                    "<" => Token::InputOperator(lexeme.clone()),
+                    ";" => Token::Terminator(lexeme.clone()),
+                    _ => Token::Misc(lexeme.clone()),
+                });
         }
 
         iter += 1;
