@@ -47,7 +47,8 @@ fn main() {
             },
 
             "cat" => {
-                //lib::cat::cat(lexemes);
+                tokens.remove(0);
+                lib::cat::cat(tokens);
             }
 
             "clear" => {
