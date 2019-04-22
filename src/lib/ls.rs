@@ -14,7 +14,7 @@ use std::os::unix::fs::{ FileTypeExt, MetadataExt, PermissionsExt };
 
 use std::collections::HashSet;
 
-use crate::lib::lexeme::Lexeme;
+use crate::lib::token::Token;
 
 #[derive(Debug)]
 enum ContentOption {
@@ -82,7 +82,7 @@ struct Output {
     list: String,
 }
 
-pub fn ls(lexemes: Vec<Lexeme>) {
+pub fn ls(tokens: Vec<Token>) {
     println!("\nExecuting from module 'ls'. . .");
 
     let mut options: HashSet<String> = HashSet::new();
@@ -107,7 +107,7 @@ pub fn ls(lexemes: Vec<Lexeme>) {
             },
     };
 
-    if lexemes.len() == 0 {
+    if tokens.len() == 0 {
         files.push(".");
         let output = process_instruction(&mut instruction, files);
         display(output.unwrap());
@@ -115,22 +115,24 @@ pub fn ls(lexemes: Vec<Lexeme>) {
     }
 
     // separate option and files
-    for lexeme in &lexemes {
-        match &lexeme {
-            Lexeme::OPTION(_option) => {
+    for token in &tokens {
+        match &token {
+            Token::Option(_) => {
                 
-                if !lexeme.unwrap().starts_with("--") {
-                    println!("OPTION: {}", &lexeme.unwrap());
-                    options.extend(parse_options(&lexeme.unwrap()));
+                if !token.unwrap().starts_with("--") {
+                    println!("OPTION: {}", &token.unwrap());
+                    options.extend(parse_options(&token.unwrap()));
                 } else {
-                    options.insert(lexeme.unwrap().to_string());
+                    options.insert(token.unwrap().to_string());
                 }
             },
 
-            Lexeme::FILE(_file) => {
-                files.push(&lexeme.unwrap());
-                println!("FILE: {}", &lexeme.unwrap());
+            Token::Misc(_) => {
+                files.push(&token.unwrap());
+                println!("FILE: {}", &token.unwrap());
             },
+
+            _ => ()
         }
     }
     

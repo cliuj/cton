@@ -32,17 +32,18 @@ fn main() {
         //    println!("Input: {}, Kind: {}", lex.input, lex.kind);
         //}
 
-        let tokens = lib::tokenizer::tokenize(input.trim());
+        let mut tokens = lib::tokenizer::tokenize(input.trim());
 
-        //for token in &tokens {
-        //    println!("{:?}", token);
-        //}
+        for token in &tokens {
+            println!("{:?}", token);
+        }
 
         
 
         match cmd[0].as_ref() {
             "ls" => {
-                //lib::ls::ls(lexemes);
+                tokens.remove(0);
+                lib::ls::ls(tokens);
             },
 
             "cat" => {
