@@ -49,7 +49,12 @@ fn main() {
             "cat" => {
                 tokens.remove(0);
                 lib::cat::cat(tokens);
-            }
+            },
+
+            "grep" => {
+                tokens.remove(0);
+                lib::grep::grep(tokens);
+            },
 
             "clear" => {
                 print!("\x1b[2J\x1b[1;1H");
