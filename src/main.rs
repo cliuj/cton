@@ -56,6 +56,11 @@ fn main() {
                 lib::grep::grep(tokens);
             },
 
+            "mkdir" => {
+                tokens.remove(0);
+                lib::mkdir::mkdir(tokens);
+            }
+
             "clear" => {
                 print!("\x1b[2J\x1b[1;1H");
             },
