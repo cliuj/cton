@@ -59,6 +59,11 @@ fn main() {
             "mkdir" => {
                 tokens.remove(0);
                 lib::mkdir::mkdir(tokens);
+            },
+
+            "rmdir" => {
+                tokens.remove(0);
+                lib::rmdir::rmdir(tokens);
             }
 
             "clear" => {
