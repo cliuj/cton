@@ -2,6 +2,7 @@
 extern crate quick_error;
 
 use std::io;
+use std::env;
 use std::io::Write;
 use std::vec::Vec;
 use std::convert::AsRef;
@@ -10,7 +11,10 @@ mod lib;
 
 fn main() {
     loop {
-        print!("~> ");
+
+        let current_dir = env::current_dir();
+
+        print!("{}> ", current_dir.unwrap().as_path().to_str().unwrap());
         // flush buffer or print! won't print immediately!
         io::stdout().flush()
             .expect("Failed to flush stdout buffer");
@@ -44,6 +48,11 @@ fn main() {
             "ls" => {
                 tokens.remove(0);
                 lib::ls::ls(tokens);
+            },
+
+            "cd" => {
+                tokens.remove(0);
+                lib::cd::cd(tokens);
             },
 
             "cat" => {
