@@ -65,6 +65,11 @@ fn main() {
                 lib::grep::grep(tokens);
             },
 
+            "kill" => {
+                tokens.remove(0);
+                lib::kill::kill(tokens);
+            }
+
             "mkdir" => {
                 tokens.remove(0);
                 lib::mkdir::mkdir(tokens);
@@ -73,7 +78,12 @@ fn main() {
             "rmdir" => {
                 tokens.remove(0);
                 lib::rmdir::rmdir(tokens);
-            }
+            },
+
+            "sleep" => {
+                tokens.remove(0);
+                lib::sleep::sleep(tokens);
+            },
 
             "clear" => {
                 print!("\x1b[2J\x1b[1;1H");
