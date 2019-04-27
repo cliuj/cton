@@ -60,6 +60,11 @@ fn main() {
                 lib::cat::cat(tokens);
             },
 
+            "env" =>{
+                tokens.remove(0);
+                lib::env::env();
+            },
+
             "grep" => {
                 tokens.remove(0);
                 lib::grep::grep(tokens);
