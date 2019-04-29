@@ -1,6 +1,7 @@
 pub mod ls;
 pub mod cat;
 pub mod cd;
+pub mod cp;
 pub mod grep;
 pub mod env;
 pub mod kill;
@@ -10,4 +11,3 @@ pub mod sleep;
 pub mod timeout;
 pub mod token;
 pub mod tokenizer;
-

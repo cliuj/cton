@@ -55,6 +55,11 @@ fn main() {
                 lib::cd::cd(tokens);
             },
 
+            "cp" => {
+                tokens.remove(0);
+                lib::cp::cp(tokens);
+            }
+
             "cat" => {
                 tokens.remove(0);
                 lib::cat::cat(tokens);
@@ -89,6 +94,11 @@ fn main() {
                 tokens.remove(0);
                 lib::sleep::sleep(tokens);
             },
+
+            "timeout" => {
+                tokens.remove(0);
+                lib::timeout::timeout(tokens);
+            }
 
             "clear" => {
                 print!("\x1b[2J\x1b[1;1H");
