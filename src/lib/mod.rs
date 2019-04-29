@@ -7,6 +7,7 @@ pub mod kill;
 pub mod mkdir;
 pub mod rmdir;
 pub mod sleep;
+pub mod timeout;
 pub mod token;
 pub mod tokenizer;
 
